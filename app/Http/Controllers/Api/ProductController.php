@@ -27,6 +27,7 @@ class ProductController extends Controller
     public function store(ProductStoreRequest $request)
     {
         $data = $request->validated();
+        $this->authorize('create', Product::class);
         if (empty($data['slug']) && !empty($data['name'])) {
             $data['slug'] = Str::slug($data['name']);
         }
@@ -37,6 +38,7 @@ class ProductController extends Controller
     public function update(ProductUpdateRequest $request, $id)
     {
         $product = Product::findOrFail($id);
+        $this->authorize('update', $product);
         $data = $request->validated();
         if (array_key_exists('name', $data) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -48,6 +50,7 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
+        $this->authorize('delete', $product);
         $product->delete();
         return response()->json(null, 204);
     }

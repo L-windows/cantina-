@@ -6,22 +6,36 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Wallet;
 use App\Models\Transaction;
+use App\Http\Resources\WalletResource;
+use App\Policies\WalletPolicy;
 
 class WalletController extends Controller
 {
     public function index(Request $request) {
         $user = $request->user();
-        if ($user->role === 'student' && $user->student) {
-             return response()->json($user->student->wallet);
+           if ($user->role === 'student') {
+               $student = $user->students()->first();
+               $wallet = $student ? $student->wallet : null;
+             if (!$wallet) {
+                 return response()->json(['data' => null]);
+             }
+             $this->authorize('view', $wallet);
+             return new WalletResource($wallet);
         }
-        // Admin or parents could view multiple wallets, simplified for now
-        return response()->json(['message' => 'For students only or specify wallet'], 400);
+
+        // Admin: return paginated wallets
+        if ($user->role === 'admin' || $user->role === 'operator') {
+            $query = Wallet::query();
+            return WalletResource::collection($query->latest()->paginate(15));
+        }
+
+        return response()->json(['message' => 'For students only or admins/operators'], 403);
     }
 
     public function history(Request $request) {
         // Assume student view, or pass wallet_id for parents
         $wallet_id = $request->query('wallet_id');
-        
+
         $query = Transaction::query();
         if ($wallet_id) {
             $query->where('wallet_id', $wallet_id);
@@ -37,6 +51,7 @@ class WalletController extends Controller
         ]);
 
         $wallet = Wallet::findOrFail($request->wallet_id);
+        $this->authorize('manage', Wallet::class);
         $wallet->balance += $request->amount;
         $wallet->save();
 
@@ -50,7 +65,7 @@ class WalletController extends Controller
 
         return response()->json([
             'message' => 'Topup successful',
-            'wallet' => $wallet
+            'wallet' => new WalletResource($wallet)
         ]);
     }
 }

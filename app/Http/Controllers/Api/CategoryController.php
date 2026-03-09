@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryStoreRequest;
 use App\Http\Requests\CategoryUpdateRequest;
 use App\Http\Resources\CategoryResource;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\Category;
 
 class CategoryController extends Controller
@@ -27,6 +27,7 @@ class CategoryController extends Controller
     public function store(CategoryStoreRequest $request)
     {
         $data = $request->validated();
+        $this->authorize('create', Category::class);
         if (empty($data['slug']) && !empty($data['name'])) {
             $data['slug'] = Str::slug($data['name']);
         }
@@ -37,6 +38,7 @@ class CategoryController extends Controller
     public function update(CategoryUpdateRequest $request, $id)
     {
         $category = Category::findOrFail($id);
+        $this->authorize('update', $category);
         $data = $request->validated();
         if (array_key_exists('name', $data) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['name']);
@@ -48,6 +50,7 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
+        $this->authorize('delete', $category);
         $category->delete();
         return response()->json(null, 204);
     }

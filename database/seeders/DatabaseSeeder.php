@@ -17,9 +17,16 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Existing test user (idempotent)
+        User::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        // Create admin user and representative role users
+        $this->call([AdminUserSeeder::class, RoleUsersSeeder::class]);
     }
 }

@@ -26,6 +26,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/wallet/topup', [WalletController::class, 'topup']);
         Route::get('/wallet/history', [WalletController::class, 'history']);
 
+        // Transactions
+        Route::get('/transactions', [\App\Http\Controllers\Api\TransactionController::class, 'index']);
+        Route::post('/transactions', [\App\Http\Controllers\Api\TransactionController::class, 'store']);
+        Route::get('/transactions/{id}', [\App\Http\Controllers\Api\TransactionController::class, 'show']);
+
         // Students
         Route::get('/students', [StudentController::class, 'index']);
         Route::post('/students', [StudentController::class, 'store']);

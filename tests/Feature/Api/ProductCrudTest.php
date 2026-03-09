@@ -32,8 +32,8 @@ class ProductCrudTest extends TestCase
 
     public function test_store_update_destroy_requires_auth_and_works()
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        $admin = User::factory()->create(['role' => 'admin']);
+        Sanctum::actingAs($admin);
 
         $category = \App\Models\Category::factory()->create();
 
@@ -51,5 +51,21 @@ class ProductCrudTest extends TestCase
         $this->putJson('/api/v1/products/' . $id, ['name' => 'Updated Product'])->assertStatus(200)->assertJsonPath('data.name', 'Updated Product');
 
         $this->deleteJson('/api/v1/products/' . $id)->assertStatus(204);
+    }
+
+    public function test_non_admin_cannot_create_product()
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        Sanctum::actingAs($user);
+
+        $category = \App\Models\Category::factory()->create();
+
+        $payload = [
+            'name' => 'Nope',
+            'price' => 1.00,
+            'category_id' => $category->id,
+        ];
+
+        $this->postJson('/api/v1/products', $payload)->assertStatus(403);
     }
 }

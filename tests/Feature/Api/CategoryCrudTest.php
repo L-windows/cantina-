@@ -33,8 +33,8 @@ class CategoryCrudTest extends TestCase
 
     public function test_store_update_destroy_requires_auth_and_works()
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        $admin = User::factory()->create(['role' => 'admin']);
+        Sanctum::actingAs($admin);
 
         $payload = ['name' => 'New Category'];
         $res = $this->postJson('/api/v1/categories', $payload);
@@ -45,5 +45,14 @@ class CategoryCrudTest extends TestCase
         $this->putJson('/api/v1/categories/' . $id, ['name' => 'Updated'])->assertStatus(200)->assertJsonPath('data.name', 'Updated');
 
         $this->deleteJson('/api/v1/categories/' . $id)->assertStatus(204);
+    }
+
+    public function test_non_admin_cannot_create_category()
+    {
+        $user = User::factory()->create(['role' => 'user']);
+        Sanctum::actingAs($user);
+
+        $payload = ['name' => 'Nope'];
+        $this->postJson('/api/v1/categories', $payload)->assertStatus(403);
     }
 }

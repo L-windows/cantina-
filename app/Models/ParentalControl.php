@@ -14,6 +14,7 @@ class ParentalControl extends Model
         'daily_limit',
         'blocked_category_ids',
         'notify_on_purchase',
+        'is_blocked',
     ];
 
     protected $casts = [

@@ -12,6 +12,8 @@ use App\Models\Wallet;
 use App\Policies\WalletPolicy;
 use App\Models\Transaction;
 use App\Policies\TransactionPolicy;
+use App\Models\User;
+use App\Policies\UserPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,7 @@ class AuthServiceProvider extends ServiceProvider
         Category::class => CategoryPolicy::class,
         Wallet::class => WalletPolicy::class,
         Transaction::class => TransactionPolicy::class,
+        User::class => UserPolicy::class,
     ];
 
     public function boot()

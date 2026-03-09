@@ -43,6 +43,12 @@ Route::prefix('v1')->group(function () {
         // Protected CRUD for Products/Categories (store/update/destroy)
         Route::apiResource('products', ProductController::class)->only(['store','update','destroy']);
         Route::apiResource('categories', CategoryController::class)->only(['store','update','destroy']);
+
+        // Admin user management
+        Route::prefix('admin')->group(function () {
+            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class);
+            Route::post('users/{user}/promote', [\App\Http\Controllers\Api\Admin\UserController::class, 'promote']);
+        });
     });
 
     // Public read-only endpoints for Products/Categories

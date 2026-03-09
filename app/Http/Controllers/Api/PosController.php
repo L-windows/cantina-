@@ -9,6 +9,8 @@ use App\Models\Wallet;
 use App\Models\Transaction;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\TransactionResource;
+use App\Http\Resources\WalletResource;
 
 class PosController extends Controller
 {
@@ -23,7 +25,7 @@ class PosController extends Controller
         ]);
     }
 
-    public function purchase(Request $request) 
+    public function purchase(Request $request)
     {
         $request->validate([
             'qr_code' => 'required|string',
@@ -33,11 +35,14 @@ class PosController extends Controller
 
         $student = Student::where('qr_code', $request->qr_code)->firstOrFail();
         $wallet = Wallet::where('student_id', $student->id)->firstOrFail();
-        
+
         $products = Product::whereIn('id', $request->product_ids)->get();
         $totalAmount = $products->sum('price');
 
-        // Note: Missing parental control check here for simplicity for prototype
+        // Check parental controls if set
+        if ($student->parentalControl && $student->parentalControl->is_blocked) {
+            return response()->json(['message' => 'Purchase blocked by parental control'], 403);
+        }
 
         if ($wallet->balance < $totalAmount) {
             return response()->json(['message' => 'Insufficient funds'], 400);
@@ -52,7 +57,7 @@ class PosController extends Controller
             $transaction = Transaction::create([
                 'wallet_id' => $wallet->id,
                 'user_id' => $request->user()->id, // The POS Operator
-                'amount' => -$totalAmount,
+                'amount' => $totalAmount,
                 'type' => 'purchase',
                 'description' => 'Compra na cantina: ' . $products->pluck('name')->join(', ')
             ]);
@@ -61,9 +66,9 @@ class PosController extends Controller
 
             return response()->json([
                 'message' => 'Purchase successful',
-                'transaction' => $transaction,
-                'new_balance' => $wallet->balance
-            ]);
+                'transaction' => new TransactionResource($transaction),
+                'wallet' => new WalletResource($wallet)
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
